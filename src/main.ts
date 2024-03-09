@@ -4,10 +4,11 @@ import {WaveSurfer} from "./WaveSurfer";
     const surfer = await WaveSurfer.MakeSurfer()
 
     function init(): void {
-        initInput();
+        initListeners();
+        initErrorHandlers();
     }
 
-    function initInput(): void {
+    function initListeners(): void {
         const input = document.querySelector<HTMLButtonElement>('#audio-input');
         const playButton = document.querySelector<HTMLButtonElement>('#play-button');
         const stopButton = document.querySelector<HTMLButtonElement>('#stop-button');
@@ -16,6 +17,21 @@ import {WaveSurfer} from "./WaveSurfer";
         input?.addEventListener('change', onFileUpload);
         playButton?.addEventListener('click', onPlay);
         stopButton?.addEventListener('click', onStop);
+    }
+
+    function initErrorHandlers(): void {
+        window.onunhandledrejection = function (e: PromiseRejectionEvent) {
+            reportError(new Error(e.reason))
+        }
+
+        window.onerror = function (
+            event,
+            source,
+            lineno,
+            colno,
+            error) {
+            reportError(error)
+        }
     }
 
     async function onPlay(): Promise<void> {
