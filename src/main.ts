@@ -8,10 +8,10 @@ import {WaveSurfer} from "./WaveSurfer";
     }
 
     function initInput(): void {
-        const input = document.querySelector('#audio-input');
-        const playButton = document.querySelector('#play-button');
-        const stopButton = document.querySelector('#stop-button');
-        const analyzeButton = document.querySelector('#analyze-button');
+        const input = document.querySelector<HTMLButtonElement>('#audio-input');
+        const playButton = document.querySelector<HTMLButtonElement>('#play-button');
+        const stopButton = document.querySelector<HTMLButtonElement>('#stop-button');
+        const analyzeButton = document.querySelector<HTMLButtonElement>('#analyze-button');
 
         input?.addEventListener('change', onFileUpload);
         playButton?.addEventListener('click', onPlay);
@@ -19,38 +19,60 @@ import {WaveSurfer} from "./WaveSurfer";
     }
 
     async function onPlay(): Promise<void> {
-        await surfer.play();
+        try {
+            await surfer.play();
+        } catch (e) {
+            reportError(e);
+        }
     }
 
     async function onStop(): Promise<void> {
-        await surfer.stop();
+        try {
+            await surfer.stop();
+        } catch (e) {
+            reportError(e);
+        }
+    }
+
+    function onFileLoad(e: ProgressEvent<FileReader>): void {
+        toggleLoaderIndicator();
+
+        const buff = e.target?.result as ArrayBuffer;
+        if (!buff) {
+            return;
+        }
+
+        surfer.prepare(buff)
+            .catch(reportError)
+            .finally(toggleLoaderIndicator)
     }
 
     async function onFileUpload(e: Event): Promise<void> {
         const target = e.target as HTMLInputElement;
-        const file = target?.files?.[0];
-        if (!file) {
-            console.error("file doesn't contain any file");
+        if (!target.files?.length) {
             return;
         }
 
+        const [file] = target.files;
         const reader = new FileReader();
-        reader.onload = (): void => {
-            toggleLoaderVisibility();
-
-            const buff = reader.result as ArrayBuffer;
-            if (buff) {
-                surfer.prepare(buff).then(toggleLoaderVisibility);
-            } else {
-                console.error('error');
-            }
-        };
-
+        reader.onload = onFileLoad;
+        reader.onerror = onFileError;
+        reader.onabort = onFileError;
         reader.readAsArrayBuffer(file);
     }
 
-    function toggleLoaderVisibility(): void {
-        document.querySelector('#loader')?.classList.toggle('hidden');
+    function onFileError(e: ProgressEvent<FileReader>): void {
+        reportError(new Error('Something happened in Porto'))
+    }
+
+    function toggleLoaderIndicator(): void {
+        document.querySelector<HTMLDivElement>('#loader')?.classList.toggle('hidden');
+    }
+
+    function reportError(error?: Error): void {
+        const el = document.querySelector<HTMLDivElement>("#error-report");
+        if (!el) return;
+        el.innerText = error?.message ?? 'Unhandled Error'
     }
 
     await init();

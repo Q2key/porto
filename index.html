@@ -2,36 +2,40 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Audioporn</title>
-  <link rel="stylesheet" type="text/css" href="./src/styles.css" />
+    <meta charset="UTF-8"/>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Porto</title>
+    <link rel="stylesheet" type="text/css" href="./src/styles.css"/>
 </head>
 
 <body>
-  <div id="app">
-    <input id="audio-input" type="file" name="audio" />
+<div id="app">
+    <input id="audio-input" type="file" name="audio"/>
     <div id="samples">
-      <div id="loader" class="loader hidden">Loading...</div>
-      <ul id="sample-list"></ul>
+        <div id="loader" class="loader hidden">Loading...</div>
+        <ul id="sample-list"></ul>
     </div>
 
     <section>
-      <div class="panel">
-        <fieldset>
-          <legend>
-            Control panel
-          </legend>
-          <button id="analyze-button">Show data</button>
-          <button id="play-button">Play</button>
-          <button id="stop-button">Stop</button>
-        </fieldset>
+        <div class="panel">
+            <fieldset>
+                <legend>
+                    Control panel
+                </legend>
+                <button id="analyze-button">Show data</button>
+                <button id="play-button">Play</button>
+                <button id="stop-button">Stop</button>
+            </fieldset>
+        </div>
     </section>
-  </div>
-  </div>
 
-  <script type="module" src="/src/main.ts"></script>
+    <section>
+        <pre id="error-report" class="error-report"></pre>
+    </section>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
 </body>
 
 </html>
