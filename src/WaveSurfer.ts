@@ -14,13 +14,10 @@ export class WaveSurfer {
         this.audioBufferSourceNode = audioBufferSourceNode;
     }
 
-    public static async MakeSurfer(): Promise<WaveSurfer> {
-        const ctx = new AudioContext();
-
+    public static async MakeSurfer(ctx: AudioContext): Promise<WaveSurfer> {
         await ctx.audioWorklet.addModule("src/processors/transparent-processor.js")
         const audioWorkletNode = new AudioWorkletNode(ctx, PROCESSORS.TRANSPARENT_PROCESSOR);
         const audioBufferSourceNode = ctx.createBufferSource();
-
         return new WaveSurfer(ctx, audioWorkletNode, audioBufferSourceNode);
     }
 

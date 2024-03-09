@@ -1,7 +1,7 @@
 import {WaveSurfer} from "./WaveSurfer";
 
 (async () => {
-    const surfer = await WaveSurfer.MakeSurfer()
+    let surfer;
 
     function init(): void {
         initListeners();
@@ -50,17 +50,17 @@ import {WaveSurfer} from "./WaveSurfer";
         }
     }
 
-    function onFileLoad(e: ProgressEvent<FileReader>): void {
+    async function onFileLoad(e: ProgressEvent<FileReader>): Promise<void> {
         toggleLoaderIndicator();
-
-        const buff = e.target?.result as ArrayBuffer;
-        if (!buff) {
-            return;
+        try {
+            surfer = await WaveSurfer.MakeSurfer(new AudioContext());
+            await surfer.prepare(e.target?.result as ArrayBuffer)
+        } catch (e) {
+            reportError(e);
+        } finally {
+            toggleLoaderIndicator();
         }
 
-        surfer.prepare(buff)
-            .catch(reportError)
-            .finally(toggleLoaderIndicator)
     }
 
     async function onFileUpload(e: Event): Promise<void> {
