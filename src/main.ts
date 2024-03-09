@@ -1,87 +1,57 @@
-import { WaveSurfer } from "./WaveSurfer";
+import {WaveSurfer} from "./WaveSurfer";
 
 (async () => {
-  const surfer = WaveSurfer.MakeSurfer();
-  await surfer.initialize();
+    const surfer = await WaveSurfer.MakeSurfer()
 
-  let buffer: ArrayBuffer | undefined;
-  let file: File | undefined;
-
-  function init(): void {
-    console.log('init');
-    initInput();
-  }
-
-  function initInput(): void {
-    const input = document.getElementById('audio-input');
-    const playButton = document.getElementById('play-button');
-    const stopButton = document.getElementById('stop-button');
-    const analyzeButton = document.getElementById('analyze-button');
-
-    if (!input) {
-      console.error('audio input was not found');
-      return;
+    function init(): void {
+        initInput();
     }
 
-    if (!analyzeButton) {
-      console.error('analyze button was not found');
-      return;
+    function initInput(): void {
+        const input = document.querySelector('#audio-input');
+        const playButton = document.querySelector('#play-button');
+        const stopButton = document.querySelector('#stop-button');
+        const analyzeButton = document.querySelector('#analyze-button');
+
+        input?.addEventListener('change', onFileUpload);
+        playButton?.addEventListener('click', onPlay);
+        stopButton?.addEventListener('click', onStop);
     }
 
-    if (!playButton) {
-      console.error('play button was not found');
-      return;
+    async function onPlay(): Promise<void> {
+        await surfer.play();
     }
 
-    if (!stopButton) {
-      console.error('stop button was not found');
-      return;
+    async function onStop(): Promise<void> {
+        await surfer.stop();
     }
 
-    input.addEventListener('change', onFileUpload);
-    playButton.addEventListener('click', onPlay);
-    stopButton.addEventListener('click', onStop);
-  }
+    async function onFileUpload(e: Event): Promise<void> {
+        const target = e.target as HTMLInputElement;
+        const file = target?.files?.[0];
+        if (!file) {
+            console.error("file doesn't contain any file");
+            return;
+        }
 
-  async function onPlay(): Promise<void> {
-    await surfer.play();
-  }
+        const reader = new FileReader();
+        reader.onload = (): void => {
+            toggleLoaderVisibility();
 
-  async function onStop(): Promise<void> {
-    await surfer.stop();
-  }
+            const buff = reader.result as ArrayBuffer;
+            if (buff) {
+                surfer.prepare(buff).then(toggleLoaderVisibility);
+            } else {
+                console.error('error');
+            }
+        };
 
-  async function onFileUpload(e: Event): Promise<void> {
-    const target = e.target as HTMLInputElement;
-    const file = target?.files?.[0];
-    if (!file) {
-      console.error("file doesn't contain any file");
-      return;
+        reader.readAsArrayBuffer(file);
     }
 
-    const reader = new FileReader();
-    reader.onload = async (): Promise<void> => {
-      toggleLoaderVisibility();
+    function toggleLoaderVisibility(): void {
+        document.querySelector('#loader')?.classList.toggle('hidden');
+    }
 
-      const buff = reader.result as ArrayBuffer;
-      if (buff) {
-        console.log('buff was loaded!');
-        buffer = buff;
-        toggleLoaderVisibility();
-        Promise.resolve();
-      } else {
-        console.error('error');
-        Promise.reject('error');
-      }
-    };
-
-    reader.readAsArrayBuffer(file);
-  }
-
-  function toggleLoaderVisibility(): void {
-    document.getElementById('loader')?.classList.toggle('hidden');
-  }
-
-
-  init();
+    await init();
 })();

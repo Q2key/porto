@@ -1,64 +1,44 @@
+enum PROCESSORS {
+    TRANSPARENT_PROCESSOR = 'transparent-processor',
+    WHITE_NOISE_PROCESSOR = 'white-noise-processor',
+}
+
 export class WaveSurfer {
-    #audioContext: AudioContext | undefined;
-    #audioWorkletNode: AudioWorkletNode | undefined;
-    #connected: boolean = false;
+    private readonly audioContext: AudioContext;
+    private readonly audioWorkletNode: AudioWorkletNode;
+    private readonly audioBufferSourceNode: AudioBufferSourceNode;
 
-    constructor() {
-        if (typeof window.AudioContext !== 'function') {
-            console.error('AudioContext is missing');
-            return;
-        }
-
-        this.#audioContext = new AudioContext();
+    constructor(audioContext: AudioContext, audioWorklet: AudioWorkletNode, audioBufferSourceNode) {
+        this.audioContext = audioContext;
+        this.audioWorkletNode = audioWorklet;
+        this.audioBufferSourceNode = audioBufferSourceNode;
     }
 
-    public async initialize(): Promise<void> {
-        if (!this.#audioContext) {
-            return;
-        }
+    public static async MakeSurfer(): Promise<WaveSurfer> {
+        const ctx = new AudioContext();
 
-        await this.#audioContext.audioWorklet.addModule("src/processors/white-noise-processor.js");
-        this.#audioWorkletNode = new AudioWorkletNode(
-            this.#audioContext,
-          "white-noise-processor"
-        );
+        await ctx.audioWorklet.addModule("src/processors/transparent-processor.js")
+        const audioWorkletNode = new AudioWorkletNode(ctx, PROCESSORS.TRANSPARENT_PROCESSOR);
+        const audioBufferSourceNode = ctx.createBufferSource();
+
+        return new WaveSurfer(ctx, audioWorkletNode, audioBufferSourceNode);
     }
 
     public async play(): Promise<void> {
-        if (!this.#audioContext) {
-            return;
-        }
-
-        if (!this.#audioWorkletNode) {
-            return;
-        }
-
-        if (this.#connected) {
-            return;
-        }
-
-        this.#audioWorkletNode.connect(this.#audioContext.destination);
-        this.#connected = true;
+        await this.audioContext.resume();
+        this.audioBufferSourceNode.connect(this.audioWorkletNode).connect(this.audioContext.destination);
     }
 
     public async stop(): Promise<void> {
-        if (!this.#audioContext) {
-            return;
-        }
-
-        if (!this.#audioWorkletNode) {
-            return;
-        }
-
-        if (!this.#connected) {
-            return;
-        }
-
-        this.#audioWorkletNode.disconnect(this.#audioContext.destination);
-        this.#connected = false;
+        await this.audioContext.suspend();
+        this.audioBufferSourceNode.disconnect();
     }
 
-    public static MakeSurfer(): WaveSurfer {
-        return new WaveSurfer();
+    async prepare(arrayBuffer: ArrayBuffer) {
+        const buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        if (buffer?.length) {
+            this.audioBufferSourceNode.buffer = buffer;
+            this.audioBufferSourceNode.start();
+        }
     }
 }
