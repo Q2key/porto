@@ -21,11 +21,16 @@ class TransparentProcessor extends AudioWorkletProcessor {
                     let sample = input[channel][i];
                     output[channel][i] = sample;
                 }
+
+                this.port.postMessage("Hello");
             }
+
+
         }
 
         // Return; let the system know we're still active
         // and ready to process audio.
+
 
         return true;
     }

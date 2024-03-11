@@ -1,69 +1,71 @@
-import {WaveSurfer} from "./WaveSurfer";
+import {WaveSurfer} from "./modules/WaveSurfer";
 
-(async () => {
-    let surfer;
+class App {
+    #surfer: WaveSurfer | undefined;
 
-    function init(): void {
-        initListeners();
-        initErrorHandlers();
+    init = (): void => {
+        this.initListeners();
+        this.initErrorHandlers();
     }
 
-    function initListeners(): void {
+    initListeners = (): void => {
         const input = document.querySelector<HTMLButtonElement>('#audio-input');
         const playButton = document.querySelector<HTMLButtonElement>('#play-button');
         const stopButton = document.querySelector<HTMLButtonElement>('#stop-button');
         const analyzeButton = document.querySelector<HTMLButtonElement>('#analyze-button');
 
-        input?.addEventListener('change', onFileUpload);
-        playButton?.addEventListener('click', onPlay);
-        stopButton?.addEventListener('click', onStop);
+        input?.addEventListener('change', this.onFileUpload);
+        playButton?.addEventListener('click', this.onPlay);
+        stopButton?.addEventListener('click', this.onStop);
     }
 
-    function initErrorHandlers(): void {
-        window.onunhandledrejection = function (e: PromiseRejectionEvent) {
-            reportError(new Error(e.reason))
+    initErrorHandlers = (): void => {
+        window.onunhandledrejection = (e: PromiseRejectionEvent) => {
+            this.reportErrorMessage(new Error(e.reason))
         }
 
-        window.onerror = function (
+        window.onerror = (
             event,
             source,
             lineno,
             colno,
-            error) {
-            reportError(error)
+            error) => {
+            this.reportErrorMessage(error)
         }
     }
 
-    async function onPlay(): Promise<void> {
+    onPlay = async (): Promise<void> => {
         try {
-            await surfer.play();
+            await this.#surfer?.play();
         } catch (e) {
             reportError(e);
         }
     }
 
-    async function onStop(): Promise<void> {
+    onStop = async (): Promise<void> => {
         try {
-            await surfer.stop();
+            await this.#surfer?.stop();
         } catch (e) {
-            reportError(e);
+            this.reportErrorMessage(e);
         }
     }
 
-    async function onFileLoad(e: ProgressEvent<FileReader>): Promise<void> {
-        toggleLoaderIndicator();
+    onFileLoad = async (e: ProgressEvent<FileReader>): Promise<void> => {
         try {
-            surfer = await WaveSurfer.MakeSurfer(new AudioContext());
-            await surfer.prepare(e.target?.result as ArrayBuffer)
+            this.toggleLoaderIndicator();
+            const context = new AudioContext();
+            const buff = e.target?.result as ArrayBuffer;
+
+            this.#surfer = await WaveSurfer.MakeSurfer(context, buff,
+                document.querySelector("#canvas")
+            );
         } catch (e) {
-            reportError(e);
+            this.reportErrorMessage(e);
         } finally {
-            toggleLoaderIndicator();
+            this.toggleLoaderIndicator();
         }
-
     }
-
-    async function onFileUpload(e: Event): Promise<void> {
+    onFileUpload = async (e: Event): Promise<void> => {
         const target = e.target as HTMLInputElement;
         if (!target.files?.length) {
             return;
@@ -71,25 +73,26 @@ import {WaveSurfer} from "./WaveSurfer";
 
         const [file] = target.files;
         const reader = new FileReader();
-        reader.onload = onFileLoad;
-        reader.onerror = onFileError;
-        reader.onabort = onFileError;
+        reader.onload = this.onFileLoad;
+        reader.onerror = this.onFileError;
+        reader.onabort = this.onFileError;
         reader.readAsArrayBuffer(file);
     }
 
-    function onFileError(e: ProgressEvent<FileReader>): void {
+    onFileError = (e: ProgressEvent<FileReader>): void => {
         reportError(new Error('Something happened in Porto'))
     }
 
-    function toggleLoaderIndicator(): void {
+    toggleLoaderIndicator = (): void => {
         document.querySelector<HTMLDivElement>('#loader')?.classList.toggle('hidden');
     }
 
-    function reportError(error?: Error): void {
+    reportErrorMessage = (error?: Error): void => {
         const el = document.querySelector<HTMLDivElement>("#error-report");
         if (!el) return;
         el.innerText = error?.message ?? 'Unhandled Error'
     }
+}
 
-    await init();
-})();
+const app = new App();
+await app.init();
