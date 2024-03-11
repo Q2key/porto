@@ -1,3 +1,4 @@
+//Inspired by https://github.com/mdn/webaudio-examples/blob/main/audio-analyser/index.html
 enum PROCESSORS {
     TRANSPARENT_PROCESSOR = 'transparent-processor',
     WHITE_NOISE_PROCESSOR = 'white-noise-processor',
