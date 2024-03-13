@@ -1,22 +1,17 @@
-// white-noise-processor.js
+/* eslint-disable no-undef */
 class WhiteNoiseProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors () {
+    return [
+      {
+        name: 'gain',
+        defaultValue: 0.2,
+        minValue: 0,
+        maxValue: 1
+      }
+    ];
+  }
 
-    constructor() {
-        super();
-    }
-
-    static get parameterDescriptors() {
-        return [
-            {
-                name: "gain",
-                defaultValue: 0.2,
-                minValue: 0,
-                maxValue: 1,
-            },
-        ];
-    }
-
-    /**
+  /**
      * Called by the browser's audio subsystem with
      * packets of audio data to be processed.
      *
@@ -33,47 +28,46 @@ class WhiteNoiseProcessor extends AudioWorkletProcessor {
      * for the current block of audio data.
      **/
 
-    process(inputList, outputList, parameters) {
-        const gain = parameters.gain[0];
-        const sourceLimit = Math.min(inputList.length, outputList.length);
+  process (inputList, outputList, parameters) {
+    const gain = parameters.gain[0];
+    const sourceLimit = Math.min(inputList.length, outputList.length);
 
-        for (let inputNum = 0; inputNum < sourceLimit; inputNum++) {
-            let input = inputList[inputNum];
-            let output = outputList[inputNum];
-            let channelCount = Math.min(input.length, output.length);
+    for (let inputNum = 0; inputNum < sourceLimit; inputNum++) {
+      const input = inputList[inputNum];
+      const output = outputList[inputNum];
+      const channelCount = Math.min(input.length, output.length);
 
-            // The input list and output list are each arrays of
-            // Float32Array objects, each of which contains the
-            // samples for one channel.
+      // The input list and output list are each arrays of
+      // Float32Array objects, each of which contains the
+      // samples for one channel.
 
-            for (let channel = 0; channel < channelCount; channel++) {
-                let sampleCount = input[channel].length;
+      for (let channel = 0; channel < channelCount; channel++) {
+        const sampleCount = input[channel].length;
 
-                for (let i = 0; i < sampleCount; i++) {
-                    let sample = input[channel][i];
-                    let rnd = 2 * (Math.random() - 0.5); // Range: -1 to 1
+        for (let i = 0; i < sampleCount; i++) {
+          let sample = input[channel][i];
+          const rnd = 2 * (Math.random() - 0.5); // Range: -1 to 1
 
-                    sample = sample + rnd * gain;
+          sample = sample + rnd * gain;
 
-                    // Prevent clipping
+          // Prevent clipping
 
-                    if (sample > 1.0) {
-                        sample = 1.0;
-                    } else if (sample < -1.0) {
-                        sample = -1.0;
-                    }
+          if (sample > 1.0) {
+            sample = 1.0;
+          } else if (sample < -1.0) {
+            sample = -1.0;
+          }
 
-                    output[channel][i] = sample;
-                }
-            }
+          output[channel][i] = sample;
         }
-
-        // Return; let the system know we're still active
-        // and ready to process audio.
-
-        return true;
+      }
     }
 
+    // Return; let the system know we're still active
+    // and ready to process audio.
+
+    return true;
+  }
 }
-  
+
 registerProcessor('white-noise-processor', WhiteNoiseProcessor);

@@ -26,8 +26,6 @@ export class WaveSurfer {
         this.analyserNode = analyserNde;
         this.audioBuffer = audioBuffer;
         this.workletNode.port.onmessage = (a: MessageEvent) => {
-            console.log(a.data);
-
             const amplitudeArray = new Uint8Array(
                 this.analyserNode.frequencyBinCount
             );
@@ -35,14 +33,16 @@ export class WaveSurfer {
             // Get the time domain data for this sample
             this.analyserNode.getByteTimeDomainData(amplitudeArray);
 
-            console.log(amplitudeArray)
-
             // Draw the display when the audio is playing
             if (this.ctx.state === "running") {
                 // Draw the time domain in the canvas
                 requestAnimationFrame(() => {
                     // Get the canvas 2d context
                     const canvasContext = canvasElt.getContext("2d");
+                    
+                    if (!canvasContext) {
+                        return;
+                    }
 
                     // Clear the canvas
                     canvasContext.clearRect(
@@ -88,12 +88,11 @@ export class WaveSurfer {
         }
 
         await ctx.audioWorklet.addModule("src/processors/transparent-processor.js")
+
         const audioWorkletNode = new AudioWorkletNode(ctx, PROCESSORS.TRANSPARENT_PROCESSOR);
         const audioBufferSourceNode = ctx.createBufferSource();
         const buffer = await ctx.decodeAudioData(arrayBuffer);
         const analyserNode = new AnalyserNode(ctx);
-
-
 
         return new WaveSurfer(ctx,
             audioWorkletNode,
@@ -102,9 +101,5 @@ export class WaveSurfer {
             buffer,
             canvasElt,
         );
-    }
-
-    async prepare (): Promise<void> {
-
     }
 }
